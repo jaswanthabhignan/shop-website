@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", 
-        "postgresql://postgres:postgres@localhost:5432/murali_catalogue"
+        "postgresql://neondb_owner:npg_crMm6aFIWNT5@ep-round-frost-b4xvvd30-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
     )
     SQLITE_FALLBACK_URL: str = "sqlite:///./murali_catalogue.db"
     CORS_ORIGINS: List[str] = [
