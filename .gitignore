@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+backend/venv/
+venv/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Build output
+frontend/dist/
+dist/
+
+# Python cache & database files
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+
+# Logs
+*.log
