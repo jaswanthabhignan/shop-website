@@ -10,7 +10,7 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "postgresql://neondb_owner:npg_crMm6aFIWNT5@ep-round-frost-b4xvvd30-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
     )
-    SQLITE_FALLBACK_URL: str = "sqlite:///./murali_catalogue.db"
+    SQLITE_FALLBACK_URL: str = os.getenv("SQLITE_FALLBACK_URL", "sqlite:////tmp/murali_catalogue.db" if os.name != "nt" else "sqlite:///./murali_catalogue.db")
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:3000",

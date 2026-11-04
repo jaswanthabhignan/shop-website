@@ -44,6 +44,8 @@ def on_startup():
         logger.error(f"Startup seed error: {e}")
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def root():
     return {
         "app": settings.APP_NAME,
@@ -60,6 +62,7 @@ def root():
     }
 
 @app.get("/health")
+@app.get("/api/health")
 def health_check():
     return {"status": "ok", "env": settings.APP_ENV}
 
