@@ -17,9 +17,6 @@ from app.routes import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn.error")
 
-# Initialize tables
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(
     title=settings.APP_NAME,
     description="Backend API for Murali Electronics store catalogue and enquiry platform.",
@@ -39,9 +36,10 @@ app.add_middleware(
 def on_startup():
     logger.info("Initializing database schema and verifying seed data...")
     try:
+        Base.metadata.create_all(bind=engine)
         seed_database()
     except Exception as e:
-        logger.error(f"Startup seed error: {e}")
+        logger.error(f"Startup database initialization error: {e}")
 
 @app.get("/")
 @app.get("/api")
