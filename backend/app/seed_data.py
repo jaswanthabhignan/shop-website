@@ -80,7 +80,7 @@ def seed_database(db: Optional[Session] = None):
             }
         ]
 
-        store_objects = {}
+        store_objects: dict[str, Store] = {}
         for s in stores_data:
             obj = Store(**s)
             db.add(obj)
@@ -138,21 +138,22 @@ def seed_database(db: Optional[Session] = None):
             }
         ]
 
-        cat_map = {}
-        sub_map = {}
+        cat_map: dict[str, Category] = {}
+        sub_map: dict[str, Subcategory] = {}
 
         for c_data in categories_data:
             subcats = c_data.pop("subcategories")
             cat_obj = Category(**c_data)
             db.add(cat_obj)
             db.flush()
-            cat_map[cat_obj.slug] = cat_obj
+            cat_map[str(cat_obj.slug)] = cat_obj
 
-            for s_data in subcats:
-                s_obj = Subcategory(category_id=cat_obj.id, **s_data)
-                db.add(s_obj)
-                db.flush()
-                sub_map[s_obj.slug] = s_obj
+            if isinstance(subcats, list):
+                for s_data in subcats:
+                    s_obj = Subcategory(category_id=cat_obj.id, **s_data)
+                    db.add(s_obj)
+                    db.flush()
+                    sub_map[str(s_obj.slug)] = s_obj
 
         # 3. Products
         products_data = [
@@ -638,15 +639,16 @@ def seed_database(db: Optional[Session] = None):
         ]
 
         for p_data in products_data:
-            c_slug = p_data.pop("category_slug")
-            s_slug = p_data.pop("subcategory_slug", None)
+            c_slug = str(p_data.pop("category_slug"))
+            raw_s_slug = p_data.pop("subcategory_slug", None)
+            s_slug = str(raw_s_slug) if raw_s_slug else None
             
             cat = cat_map.get(c_slug)
             sub = sub_map.get(s_slug) if s_slug else None
 
             prod = Product(
-                category_id=cat.id if cat else None,
-                subcategory_id=sub.id if sub else None,
+                category_id=getattr(cat, "id", None),
+                subcategory_id=getattr(sub, "id", None),
                 **p_data
             )
             db.add(prod)
