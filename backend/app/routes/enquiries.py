@@ -73,9 +73,9 @@ def update_enquiry_status(
     if not enquiry:
         raise HTTPException(status_code=404, detail="Enquiry not found")
 
-    enquiry.status = payload.status
+    setattr(enquiry, "status", payload.status)
     if payload.admin_notes is not None:
-        enquiry.admin_notes = payload.admin_notes
+        setattr(enquiry, "admin_notes", payload.admin_notes)
 
     db.commit()
     db.refresh(enquiry)

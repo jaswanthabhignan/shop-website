@@ -120,7 +120,8 @@ def get_products(
     inverter_count: Dict[str, int] = {"yes": 0, "no": 0}
 
     for p in base_products:
-        brands_count[p.brand] = brands_count.get(p.brand, 0) + 1
+        brand_name = str(p.brand)
+        brands_count[brand_name] = brands_count.get(brand_name, 0) + 1
         specs = p.specifications or {}
         if "tonnage" in specs:
             t = str(specs["tonnage"])

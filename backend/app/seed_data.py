@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.database import Base, engine, SessionLocal
 from app.models.store import Store
@@ -9,7 +10,7 @@ from app.models.enquiry import Enquiry
 
 logger = logging.getLogger("uvicorn.error")
 
-def seed_database(db: Session = None):
+def seed_database(db: Optional[Session] = None):
     close_db = False
     if db is None:
         db = SessionLocal()
