@@ -29,14 +29,14 @@ class ProductSimple(BaseModel):
 
 class EnquiryResponse(BaseModel):
     id: int
-    store_id: Optional[int]
-    product_id: Optional[int]
+    store_id: Optional[int] = None
+    product_id: Optional[int] = None
     customer_name: str
     customer_mobile: str
-    enquiry_type: str
-    message: Optional[str]
-    status: str
-    admin_notes: Optional[str]
+    enquiry_type: str = "call_back"
+    message: Optional[str] = None
+    status: str = "pending"
+    admin_notes: Optional[str] = None
     created_at: datetime
     store: Optional[StoreResponse] = None
     product: Optional[ProductSimple] = None

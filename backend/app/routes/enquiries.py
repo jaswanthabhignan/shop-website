@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from app.database import get_db
 from app.models.enquiry import Enquiry
@@ -10,6 +10,7 @@ from app.schemas.enquiry import EnquiryCreate, EnquiryResponse, EnquiryUpdateSta
 router = APIRouter(prefix="/enquiries", tags=["Enquiries"])
 
 @router.post("", response_model=EnquiryResponse)
+@router.post("/", response_model=EnquiryResponse, include_in_schema=False)
 def submit_enquiry(payload: EnquiryCreate, db: Session = Depends(get_db)):
     """Submit a new customer enquiry or call-back request."""
     # Optional check: store existence
@@ -44,6 +45,7 @@ def submit_enquiry(payload: EnquiryCreate, db: Session = Depends(get_db)):
     return enquiry
 
 @router.get("", response_model=List[EnquiryResponse])
+@router.get("/", response_model=List[EnquiryResponse], include_in_schema=False)
 def get_enquiries(
     store_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
@@ -51,11 +53,11 @@ def get_enquiries(
     db: Session = Depends(get_db)
 ):
     """Retrieve enquiries for store managers or admin."""
-    query = db.query(Enquiry)
+    query = db.query(Enquiry).options(joinedload(Enquiry.store), joinedload(Enquiry.product))
     if store_id:
         query = query.filter(Enquiry.store_id == store_id)
-    if status:
-        query = query.filter(Enquiry.status == status)
+    if status and status.lower() != "all":
+        query = query.filter(Enquiry.status == status.lower())
 
     enquiries = query.order_by(Enquiry.created_at.desc()).limit(limit).all()
     return enquiries

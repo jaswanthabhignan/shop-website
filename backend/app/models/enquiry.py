@@ -7,8 +7,8 @@ class Enquiry(Base):
     __tablename__ = "enquiries"
 
     id = Column(Integer, primary_key=True, index=True)
-    store_id = Column(Integer, ForeignKey("stores.id"), nullable=True, index=True)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=True, index=True)
+    store_id = Column(Integer, ForeignKey("stores.id", ondelete="SET NULL"), nullable=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="SET NULL"), nullable=True, index=True)
     
     customer_name = Column(String(100), nullable=False)
     customer_mobile = Column(String(20), nullable=False) # 10-digit number

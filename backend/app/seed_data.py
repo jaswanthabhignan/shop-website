@@ -682,8 +682,8 @@ def seed_database(db: Session = None):
 
         sample_enquiries = [
             {
-                "store_id": first_store.id,
-                "product_id": first_prod.id,
+                "store_id": first_store.id if first_store else None,
+                "product_id": first_prod.id if first_prod else None,
                 "customer_name": "Ramesh Kumar",
                 "customer_mobile": "9848022334",
                 "enquiry_type": "call_back",
@@ -691,7 +691,7 @@ def seed_database(db: Session = None):
                 "status": "pending"
             },
             {
-                "store_id": first_store.id,
+                "store_id": first_store.id if first_store else None,
                 "product_id": None,
                 "customer_name": "Suresh Reddy",
                 "customer_mobile": "9440112233",

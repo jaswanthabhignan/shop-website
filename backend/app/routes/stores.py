@@ -8,6 +8,7 @@ from app.schemas.store import StoreResponse, StoreCreate
 router = APIRouter(prefix="/stores", tags=["Stores"])
 
 @router.get("", response_model=List[StoreResponse])
+@router.get("/", response_model=List[StoreResponse], include_in_schema=False)
 def get_stores(db: Session = Depends(get_db)):
     """Fetch all active stores."""
     stores = db.query(Store).filter(Store.is_active == True).order_by(Store.id.asc()).all()
@@ -26,26 +27,17 @@ def get_store(code_or_id: str, db: Session = Depends(get_db)):
     return store
 
 @router.post("", response_model=StoreResponse)
+@router.post("/", response_model=StoreResponse, include_in_schema=False)
 def create_store(payload: StoreCreate, db: Session = Depends(get_db)):
     """Create a new store location."""
-    existing = db.query(Store).filter(Store.code == payload.code.lower()).first()
+    code = payload.code.lower().strip()
+    existing = db.query(Store).filter(Store.code == code).first()
     if existing:
         raise HTTPException(status_code=400, detail="Store code already exists")
     
-    store = Store(
-        code=payload.code.lower(),
-        name=payload.name,
-        area=payload.area,
-        city=payload.city,
-        state=payload.state,
-        pincode=payload.pincode,
-        phone=payload.phone,
-        whatsapp_number=payload.whatsapp_number,
-        opening_hours_weekday=payload.opening_hours_weekday,
-        opening_hours_sunday=payload.opening_hours_sunday,
-        map_link=payload.map_link,
-        is_active=payload.is_active
-    )
+    store_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    store_data["code"] = code
+    store = Store(**store_data)
     db.add(store)
     db.commit()
     db.refresh(store)

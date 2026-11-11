@@ -59,3 +59,10 @@ class ProductListResponse(BaseModel):
     limit: int
     pages: int
     facets: Optional[Dict[str, Any]] = None
+
+class ProductDetailResponse(BaseModel):
+    product: ProductResponse
+    related: List[ProductResponse] = []
+
+    class Config:
+        from_attributes = True

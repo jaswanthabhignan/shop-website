@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, Header
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from app.database import get_db
 from app.models.store import Store
 from app.models.product import Product
-from app.models.category import Category
+from app.models.category import Category, Subcategory
 from app.models.offer import Offer
 from app.models.enquiry import Enquiry
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
@@ -25,7 +25,13 @@ def get_admin_stats(db: Session = Depends(get_db)):
     contacted_enquiries = db.query(Enquiry).filter(Enquiry.status == "contacted").count()
     completed_enquiries = db.query(Enquiry).filter(Enquiry.status == "completed").count()
 
-    recent_enquiries = db.query(Enquiry).order_by(Enquiry.created_at.desc()).limit(5).all()
+    recent_enquiries = (
+        db.query(Enquiry)
+        .options(joinedload(Enquiry.store), joinedload(Enquiry.product))
+        .order_by(Enquiry.created_at.desc())
+        .limit(5)
+        .all()
+    )
 
     return {
         "total_products": total_products,
@@ -46,7 +52,7 @@ def get_admin_stats(db: Session = Depends(get_db)):
                 "status": e.status,
                 "store": e.store.name if e.store else "General",
                 "product": e.product.name if e.product else "General Enquiry",
-                "created_at": e.created_at.isoformat()
+                "created_at": e.created_at.isoformat() if e.created_at else None
             } for e in recent_enquiries
         ]
     }
@@ -57,8 +63,18 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     existing = db.query(Product).filter(Product.slug == payload.slug).first()
     if existing:
         raise HTTPException(status_code=400, detail="Product slug already exists")
+
+    cat = db.query(Category).filter(Category.id == payload.category_id).first()
+    if not cat:
+        raise HTTPException(status_code=400, detail="Specified category does not exist")
+
+    if payload.subcategory_id:
+        sub = db.query(Subcategory).filter(Subcategory.id == payload.subcategory_id).first()
+        if not sub:
+            raise HTTPException(status_code=400, detail="Specified subcategory does not exist")
     
-    product = Product(**payload.dict())
+    prod_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    product = Product(**prod_data)
     db.add(product)
     db.commit()
     db.refresh(product)
@@ -71,7 +87,18 @@ def update_product(product_id: int, payload: ProductUpdate, db: Session = Depend
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    update_data = payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True) if hasattr(payload, "model_dump") else payload.dict(exclude_unset=True)
+
+    if "category_id" in update_data:
+        cat = db.query(Category).filter(Category.id == update_data["category_id"]).first()
+        if not cat:
+            raise HTTPException(status_code=400, detail="Specified category does not exist")
+
+    if "subcategory_id" in update_data and update_data["subcategory_id"] is not None:
+        sub = db.query(Subcategory).filter(Subcategory.id == update_data["subcategory_id"]).first()
+        if not sub:
+            raise HTTPException(status_code=400, detail="Specified subcategory does not exist")
+
     for field, val in update_data.items():
         setattr(product, field, val)
 
@@ -86,6 +113,9 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    # Disassociate enquiries pointing to this product to prevent foreign key errors
+    db.query(Enquiry).filter(Enquiry.product_id == product_id).update({Enquiry.product_id: None})
+
     db.delete(product)
     db.commit()
     return {"message": "Product successfully deleted", "id": product_id}
@@ -93,7 +123,14 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
 @router.post("/offers", response_model=OfferResponse)
 def create_offer(payload: OfferCreate, db: Session = Depends(get_db)):
     """Create a new promotional coupon offer."""
-    offer = Offer(**payload.dict())
+    code = payload.coupon_code.upper().strip()
+    existing = db.query(Offer).filter(Offer.coupon_code == code).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Coupon code already exists")
+
+    offer_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    offer_data["coupon_code"] = code
+    offer = Offer(**offer_data)
     db.add(offer)
     db.commit()
     db.refresh(offer)

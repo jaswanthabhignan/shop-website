@@ -16,7 +16,6 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "https://murali-catalogue-staging.onrender.com",
-        "*"
     ]
     ADMIN_SECRET_KEY: str = os.getenv("ADMIN_SECRET_KEY", "murali_admin_2026")
 

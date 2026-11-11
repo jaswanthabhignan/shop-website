@@ -5,11 +5,12 @@ from typing import Optional, List, Dict, Any
 from app.database import get_db
 from app.models.product import Product
 from app.models.category import Category, Subcategory
-from app.schemas.product import ProductResponse, ProductListResponse
+from app.schemas.product import ProductResponse, ProductListResponse, ProductDetailResponse
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
 @router.get("", response_model=ProductListResponse)
+@router.get("/", response_model=ProductListResponse, include_in_schema=False)
 def get_products(
     category: Optional[str] = Query(None, description="Category slug"),
     subcategory: Optional[str] = Query(None, description="Subcategory slug"),
@@ -32,22 +33,26 @@ def get_products(
     query = db.query(Product).filter(Product.is_available == True)
 
     # Category filter
-    if category:
-        cat = db.query(Category).filter(Category.slug == category).first()
+    if category and category.lower() != "all":
+        cat = db.query(Category).filter(Category.slug == category.lower()).first()
         if cat:
             query = query.filter(Product.category_id == cat.id)
+        else:
+            query = query.filter(Product.id == -1)
 
     # Subcategory filter
     if subcategory:
-        sub = db.query(Subcategory).filter(Subcategory.slug == subcategory).first()
+        sub = db.query(Subcategory).filter(Subcategory.slug == subcategory.lower()).first()
         if sub:
             query = query.filter(Product.subcategory_id == sub.id)
+        else:
+            query = query.filter(Product.id == -1)
 
-    # Brand filter (supports comma-separated)
+    # Brand filter (supports comma-separated, case-insensitive)
     if brand:
         brand_list = [b.strip() for b in brand.split(",") if b.strip()]
         if brand_list:
-            query = query.filter(Product.brand.in_(brand_list))
+            query = query.filter(func.lower(Product.brand).in_([b.lower() for b in brand_list]))
 
     # Price range
     if min_price is not None:
@@ -84,20 +89,26 @@ def get_products(
         
         # Tonnage check
         if tonnage:
-            spec_tonnage = str(specs.get("tonnage", "")).lower()
-            if tonnage.lower() not in spec_tonnage:
+            spec_tonnage = str(specs.get("tonnage", "")).strip().lower()
+            if not spec_tonnage or tonnage.strip().lower() not in spec_tonnage:
                 continue
                 
         # Star rating check
         if star_rating is not None:
             spec_star = specs.get("star_rating")
-            if spec_star is not None and int(spec_star) != star_rating:
+            if spec_star is None:
+                continue
+            try:
+                if int(spec_star) != star_rating:
+                    continue
+            except (ValueError, TypeError):
                 continue
                 
         # Inverter check
         if inverter is not None:
-            spec_inverter = specs.get("inverter")
-            if spec_inverter is not None and bool(spec_inverter) != inverter:
+            if "inverter" not in specs or specs.get("inverter") is None:
+                continue
+            if bool(specs.get("inverter")) != inverter:
                 continue
                 
         filtered_items.append(p)
@@ -132,13 +143,13 @@ def get_products(
 
     # Sorting
     if sort == "price_asc":
-        filtered_items.sort(key=lambda x: x.selling_price)
+        filtered_items.sort(key=lambda x: x.selling_price or 0.0)
     elif sort == "price_desc":
-        filtered_items.sort(key=lambda x: x.selling_price, reverse=True)
+        filtered_items.sort(key=lambda x: x.selling_price or 0.0, reverse=True)
     elif sort == "discount_desc":
         filtered_items.sort(key=lambda x: x.discount_percent or 0, reverse=True)
     elif sort == "name_asc":
-        filtered_items.sort(key=lambda x: x.name)
+        filtered_items.sort(key=lambda x: x.name or "")
     else: # newest
         filtered_items.sort(key=lambda x: x.id, reverse=True)
 
@@ -157,7 +168,7 @@ def get_products(
         facets=facets
     )
 
-@router.get("/{slug_or_id}")
+@router.get("/{slug_or_id}", response_model=ProductDetailResponse)
 def get_product(slug_or_id: str, db: Session = Depends(get_db)):
     """Fetch single product details along with related products in same category."""
     if slug_or_id.isdigit():
@@ -181,6 +192,6 @@ def get_product(slug_or_id: str, db: Session = Depends(get_db)):
     )
 
     return {
-        "product": ProductResponse.from_orm(product),
-        "related": [ProductResponse.from_orm(r) for r in related]
+        "product": product,
+        "related": related
     }
