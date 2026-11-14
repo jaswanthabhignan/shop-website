@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, Float, DateTime, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Product(Base):
@@ -33,7 +33,7 @@ class Product(Base):
     is_price_drop = Column(Boolean, default=False, index=True)
     is_available = Column(Boolean, default=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     category = relationship("Category", back_populates="products")
     subcategory = relationship("Subcategory", back_populates="products")

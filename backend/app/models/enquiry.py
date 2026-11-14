@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Enquiry(Base):
@@ -17,7 +17,7 @@ class Enquiry(Base):
     
     status = Column(String(50), default="pending", index=True) # 'pending', 'contacted', 'completed', 'cancelled'
     admin_notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     store = relationship("Store", back_populates="enquiries")
     product = relationship("Product", back_populates="enquiries")

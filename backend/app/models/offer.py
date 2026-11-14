@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Offer(Base):
@@ -13,4 +13,4 @@ class Offer(Base):
     validity = Column(String(100), nullable=False) # 'Valid 1 Apr 2026 – 31 Mar 2027 · at all stores'
     terms = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

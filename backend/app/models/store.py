@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Store(Base):
@@ -19,6 +19,6 @@ class Store(Base):
     opening_hours_sunday = Column(String(50), default="10:00–20:00")
     map_link = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     enquiries = relationship("Enquiry", back_populates="store")
