@@ -294,14 +294,14 @@ export const AdminPage = () => {
                               enq.status === 'pending'
                                 ? '#fef3c7'
                                 : enq.status === 'contacted'
-                                ? '#eff6ff'
-                                : '#f0fdf4',
+                                  ? '#eff6ff'
+                                  : '#f0fdf4',
                             color:
                               enq.status === 'pending'
                                 ? '#d97706'
                                 : enq.status === 'contacted'
-                                ? '#2563eb'
-                                : '#16a34a',
+                                  ? '#2563eb'
+                                  : '#16a34a',
                           }}
                         >
                           {enq.status}
