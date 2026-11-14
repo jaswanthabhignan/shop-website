@@ -35,7 +35,7 @@ def create_store(payload: StoreCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Store code already exists")
     
-    store_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    store_data = payload.model_dump()
     store_data["code"] = code
     store = Store(**store_data)
     db.add(store)

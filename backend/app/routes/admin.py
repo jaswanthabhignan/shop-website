@@ -73,7 +73,7 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
         if not sub:
             raise HTTPException(status_code=400, detail="Specified subcategory does not exist")
     
-    prod_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    prod_data = payload.model_dump()
     product = Product(**prod_data)
     db.add(product)
     db.commit()
@@ -87,7 +87,7 @@ def update_product(product_id: int, payload: ProductUpdate, db: Session = Depend
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    update_data = payload.model_dump(exclude_unset=True) if hasattr(payload, "model_dump") else payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
 
     if "category_id" in update_data:
         cat = db.query(Category).filter(Category.id == update_data["category_id"]).first()
@@ -128,7 +128,7 @@ def create_offer(payload: OfferCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=400, detail="Coupon code already exists")
 
-    offer_data = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
+    offer_data = payload.model_dump()
     offer_data["coupon_code"] = code
     offer = Offer(**offer_data)
     db.add(offer)
