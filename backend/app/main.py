@@ -84,3 +84,4 @@ app.include_router(products_router, prefix="/api")
 app.include_router(offers_router, prefix="/api")
 app.include_router(enquiries_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
+
