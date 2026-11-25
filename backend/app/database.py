@@ -12,6 +12,12 @@ def get_engine():
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+    # Strip channel_binding=require if still in URL
+    if "channel_binding=require" in db_url:
+        db_url = db_url.replace("&channel_binding=require", "").replace("channel_binding=require&", "").replace("channel_binding=require", "")
+        if db_url.endswith("?"):
+            db_url = db_url[:-1]
+
     try:
         # Check if PostgreSQL URL
         if db_url.startswith("postgresql"):
@@ -21,7 +27,7 @@ def get_engine():
                 pool_pre_ping=True,
                 pool_size=5,
                 max_overflow=10,
-                connect_args={"connect_timeout": 15}
+                connect_args={"connect_timeout": 30}
             )
             # Test connection
             with engine.connect():

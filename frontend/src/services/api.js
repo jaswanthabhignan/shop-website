@@ -4,6 +4,14 @@ const API_BASE = CLEAN_URL === '' || CLEAN_URL === '/api'
   ? '/api'
   : (CLEAN_URL.endsWith('/api') ? CLEAN_URL : `${CLEAN_URL}/api`);
 
+if (import.meta.env.PROD && (!import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL === '/api')) {
+  console.warn(
+    '[Murali Electronics] VITE_API_URL is not set in production. ' +
+    'API calls are routing to relative /api. ' +
+    'Ensure VITE_API_URL is set in your Vercel Project Settings (e.g. https://your-backend.onrender.com).'
+  );
+}
+
 /**
  * Handle API responses with robust error handling
  */
@@ -24,6 +32,23 @@ async function request(endpoint, options = {}) {
       const errorMsg = errorData.detail || `Request failed with status ${res.status}`;
       throw new Error(errorMsg);
     }
+    
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await res.text();
+      if (text.includes('<!doctype html') || text.includes('<html')) {
+        throw new Error(
+          `Received HTML instead of JSON from ${url}. ` +
+          `Make sure VITE_API_URL is configured in your Vercel environment variables pointing to your Render backend URL.`
+        );
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error(`Unexpected non-JSON response from ${url}`);
+      }
+    }
+    
     return await res.json();
   } catch (err) {
     console.error(`API Error on [${options.method || 'GET'} ${url}]:`, err);

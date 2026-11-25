@@ -41,14 +41,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Setup CORS with wildcard protection when credentials are used
+# Setup CORS: allow configured origins, Vercel preview/production domains, and wildcard regex
 cors_origins = [o for o in settings.CORS_ORIGINS if o != "*"]
 has_wildcard = "*" in settings.CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins if not has_wildcard else [],
-    allow_origin_regex=r"^https?://.*" if has_wildcard else None,
+    allow_origin_regex=r"^https?://.*" if has_wildcard else r"^https://.*\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
